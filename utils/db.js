@@ -1,3 +1,5 @@
+// utils/db.js
+
 const { MongoClient } = require('mongodb');
 
 class DBClient {
@@ -5,8 +7,9 @@ class DBClient {
     const host = process.env.DB_HOST || 'localhost';
     const port = process.env.DB_PORT || 27017;
     const database = process.env.DB_DATABASE || 'files_manager';
-    this.client = new MongoClient(`mongodb://${host}:${port}`, { useNewUrlParser: true, useUnifiedTopology: true });
-    this.db = null;
+    const url = `mongodb://${host}:${port}`;
+
+    this.client = new MongoClient(url, { useNewUrlParser: true, useUnifiedTopology: true });
     this.client.connect()
       .then(() => {
         this.db = this.client.db(database);
@@ -19,13 +22,25 @@ class DBClient {
   }
 
   async nbUsers() {
-    if (!this.isAlive()) return 0;
-    return this.db.collection('users').countDocuments();
+    try {
+      const db = this.client.db();
+      const collection = db.collection('users');
+      return await collection.countDocuments();
+    } catch (err) {
+      console.error('Error counting users:', err);
+      throw err;
+    }
   }
 
   async nbFiles() {
-    if (!this.isAlive()) return 0;
-    return this.db.collection('files').countDocuments();
+    try {
+      const db = this.client.db();
+      const collection = db.collection('files');
+      return await collection.countDocuments();
+    } catch (err) {
+      console.error('Error counting files:', err);
+      throw err;
+    }
   }
 }
 
