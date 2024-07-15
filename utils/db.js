@@ -52,6 +52,50 @@ class DBClient {
       throw err;
     }
   }
+
+  async getUserByEmail(email) {
+    if (!this.db) {
+      await this.connect();
+    }
+    try {
+      const collection = this.db.collection('users');
+      return await collection.findOne({ email });
+    } catch (error) {
+      console.error('Error getting email:', error);
+      throw error;
+    }
+  }
+
+  async getUserById(userId) {
+    if (!this.db) {
+      await this.connect();
+    }
+    try {
+      const collection = this.db.collection('users');
+      return await collection.findOne({ _id: userId });
+    } catch (error) {
+      console.error('Error getting userId:', error);
+      throw error;
+    }
+  }
+
+  async createUser(email, password) {
+    if (!this.db) {
+      await this.connect();
+    }
+    try {
+      const collection = this.db.collection('users');
+      const user = {
+        email,
+        password,
+      };
+      const result = await collection.insertOne(user);
+      return await result.ops[0];
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+  }
 }
 
 const dbClient = new DBClient();
