@@ -4,14 +4,15 @@ const { MongoClient } = require('mongodb');
 
 class DBClient {
   constructor() {
-    this.url = process.env.MONGODB_URI || 'mongodb+srv://mattkrozel:571066@cluster0.wji5iwx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+    this.url = process.env.MONGODB_URI || 'mongodb+srv://guest:guest@cluster0.wji5iwx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
     this.client = null;
     this.db = null;
   }
 
   async connect() {
     try {
-      this.client = await MongoClient.connect(this.url, { useNewUrlParser: true, useUnifiedTopology: true });
+      this.client = await MongoClient.connect(this.url,
+        { useNewUrlParser: true, useUnifiedTopology: true });
       this.db = this.client.db(process.env.DB_DATABASE || 'files_manager');
       console.log('Connected to MongoDB');
     } catch (error) {
@@ -38,15 +39,13 @@ class DBClient {
   }
 
   async nbFiles() {
-    if (!this.db) {
-      await this.connect();
-    }
     try {
+      if (!this.db) throw new Error('Database not initialized');
       const collection = this.db.collection('files');
       return await collection.countDocuments();
-    } catch (error) {
-      console.error('Error counting files:', error);
-      throw error;
+    } catch (err) {
+      console.error('Error counting files:', err);
+      throw err;
     }
   }
 }
