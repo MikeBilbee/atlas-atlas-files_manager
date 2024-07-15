@@ -21,7 +21,8 @@ class DBClient {
     }
   }
 
-  isAlive() {
+  async isAlive() {
+    await this.connect();
     return !!this.db;
   }
 
@@ -39,6 +40,9 @@ class DBClient {
   }
 
   async nbFiles() {
+    if (!this.db) {
+      await this.connect();
+    }
     try {
       if (!this.db) throw new Error('Database not initialized');
       const collection = this.db.collection('files');
