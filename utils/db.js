@@ -4,17 +4,20 @@ const { MongoClient } = require('mongodb');
 
 class DBClient {
   constructor() {
-    const host = process.env.DB_HOST || 'localhost';
-    const port = process.env.DB_PORT || 27017;
-    const database = process.env.DB_DATABASE || 'files_manager';
-    const url = `mongodb://${host}:${port}`;
+    this.url = process.env.MONGODB_URI || 'mongodb+srv://mattkrozel:571066@cluster0.wji5iwx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+    this.client = null;
+    this.db = null;
+  }
 
-    this.client = new MongoClient(url, { useNewUrlParser: true, useUnifiedTopology: true });
-    this.client.connect()
-      .then(() => {
-        this.db = this.client.db(database);
-      })
-      .catch((err) => console.error('DB connection err', err));
+  async connect() {
+    try {
+      this.client = await MongoClient.connect(this.url, { useNewUrlParser: true, useUnifiedTopology: true });
+      this.db = this.client.db(process.env.DB_DATABASE || 'files_manager');
+      console.log('Connected to MongoDB');
+    } catch (error) {
+      console.error('Error connecting to MongoDB:', error);
+      throw error;
+    }
   }
 
   isAlive() {
@@ -22,24 +25,28 @@ class DBClient {
   }
 
   async nbUsers() {
+    if (!this.db) {
+      await this.connect();
+    }
     try {
-      const db = this.client.db();
-      const collection = db.collection('users');
+      const collection = this.db.collection('users');
       return await collection.countDocuments();
-    } catch (err) {
-      console.error('Error counting users:', err);
-      throw err;
+    } catch (error) {
+      console.error('Error counting users:', error);
+      throw error;
     }
   }
 
   async nbFiles() {
+    if (!this.db) {
+      await this.connect();
+    }
     try {
-      const db = this.client.db();
-      const collection = db.collection('files');
+      const collection = this.db.collection('files');
       return await collection.countDocuments();
-    } catch (err) {
-      console.error('Error counting files:', err);
-      throw err;
+    } catch (error) {
+      console.error('Error counting files:', error);
+      throw error;
     }
   }
 }
