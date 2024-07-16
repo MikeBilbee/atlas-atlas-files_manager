@@ -1,7 +1,6 @@
-// User controller
-
 const crypto = require('crypto');
 const dbClient = require('../utils/db');
+const redisClient = require('../utils/redis');
 
 class UsersController {
   static async postNew(req, res) {
@@ -9,17 +8,17 @@ class UsersController {
 
     const { email, password } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ error: 'Missing email' });
-    }
-    if (!password) {
-      return res.status(400).json({ error: 'Missing password' });
-    }
-
     try {
+      if (!email) {
+        return res.status(400).json({ error: 'Missing email' });
+      }
+      if (!password) {
+        return res.status(400).json({ error: 'Missing password' });
+      }
+
       const user = await dbClient.getUserByEmail({ email });
       if (user) {
-        return res.status(400).json({ error: 'Already exist' });
+        return res.status(400).json({ error: 'Already exists' });
       }
 
       const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
@@ -28,40 +27,33 @@ class UsersController {
         email,
         password: hashedPassword,
       };
+
       const result = await dbClient.createUser(newUser);
 
-      return res.status(201).json({
-        id: result.insertedId,
-        email,
-      });
+      return res.status(201).json({ email: newUser.email, id: result.insertedId });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Internal Server Error' });
+      console.error('Error in postNew:', err);
+      return res.status(500).json({ error: 'Server error' });
     }
   }
 
   static async getMe(req, res) {
     const token = req.headers['x-token'];
-
     if (!token) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    try {
-      const user = await dbClient.getUserByEmail(token);
-
-      if (!user) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-
-      return res.status(200).json({
-        id: user._id,
-        email: user.email,
-      });
-    } catch (err) {
-      console.error('Error fetching user:', err);
-      return res.status(500).json({ error: 'Internal Server Error' });
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
+
+    const user = await dbClient.db.collection('users').findOne({ _id: dbClient.getUserById(userId) });
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    return res.status(200).json({ id: user._id, email: user.email });
   }
 }
 
