@@ -17,7 +17,7 @@ class UsersController {
     }
 
     try {
-      const user = await dbClient.collection('users').findOne({ email });
+      const user = await dbClient.getUserByEmail({ email });
       if (user) {
         return res.status(400).json({ error: 'Already exist' });
       }
@@ -28,7 +28,7 @@ class UsersController {
         email,
         password: hashedPassword,
       };
-      const result = await dbClient.collection('users').insertOne(newUser);
+      const result = await dbClient.createUser(newUser);
 
       return res.status(201).json({
         id: result.insertedId,
