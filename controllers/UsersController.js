@@ -39,6 +39,30 @@ class UsersController {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
+
+  static async getMe(req, res) {
+    const token = req.headers['x-token'];
+
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    try {
+      const user = await dbClient.getUserByEmail(token);
+
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      return res.status(200).json({
+        id: user._id,
+        email: user.email,
+      });
+    } catch (err) {
+      console.error('Error fetching user:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
 }
 
 module.exports = UsersController;

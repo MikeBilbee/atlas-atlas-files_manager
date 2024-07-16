@@ -5,6 +5,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const UsersController = require('../controllers/UsersController');
 const AppController = require('../controllers/AppController');
+const AuthController = require('../controllers/AuthController');
 
 const router = express.Router();
 
