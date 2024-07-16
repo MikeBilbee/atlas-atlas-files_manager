@@ -17,27 +17,21 @@ class UsersController {
     }
 
     try {
-      const user = await dbClient.getUserByEmail({ email });
+      const user = await dbClient.getUserByEmail(email);
       if (user) {
         return res.status(400).json({ error: 'Already exist' });
       }
 
       const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
 
-      const newUser = {
-        email,
-        password: hashedPassword,
-      };
-      const result = await dbClient.createUser(newUser);
+      const newUser = await dbClient.createUser(email, hashedPassword);
 
-      return res.status(201).json({
-        id: result.insertedId,
-        email,
-      });
+      res.status(201).json({ email: newUser.email, id: newUser._id });
     } catch (err) {
       console.error(err);
-      return res.status(500).json({ error: 'Internal Server Error' });
+      res.status(500).json({ error: 'Internal server error' });
     }
+    return null;
   }
 
   static async getMe(req, res) {
@@ -63,6 +57,6 @@ class UsersController {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
-}
+};
 
 module.exports = UsersController;
