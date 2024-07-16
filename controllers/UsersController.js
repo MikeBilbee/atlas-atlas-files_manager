@@ -5,6 +5,8 @@ const dbClient = require('../utils/db');
 
 class UsersController {
   static async postNew(req, res) {
+    console.log('Request Body:', req.body);
+
     const { email, password } = req.body;
 
     if (!email) {
@@ -15,7 +17,7 @@ class UsersController {
     }
 
     try {
-      const user = await dbClient.db().collection('users').findOne({ email });
+      const user = await dbClient.collection('users').findOne({ email });
       if (user) {
         return res.status(400).json({ error: 'Already exist' });
       }
@@ -26,7 +28,7 @@ class UsersController {
         email,
         password: hashedPassword,
       };
-      const result = await dbClient.db().collection('users').insertOne(newUser);
+      const result = await dbClient.collection('users').insertOne(newUser);
 
       return res.status(201).json({
         id: result.insertedId,
