@@ -96,6 +96,10 @@ class DBClient {
       throw error;
     }
   }
+
+  getDB() {
+    return this.db;
+  }
 }
 
 const dbClient = new DBClient();
