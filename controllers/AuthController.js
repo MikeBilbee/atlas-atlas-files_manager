@@ -24,7 +24,11 @@ class AuthController {
     const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
 
     try {
-      const user = await dbClient.db().collection('users').findOne({ email, password: hashedPassword });
+      if (!dbClient.db) {
+        await dbClient.connect();
+      }
+      const user = await dbClient.db.collection('users').findOne({ email, password: hashedPassword });
+      console.log(user);
 
       if (!user) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -32,7 +36,7 @@ class AuthController {
 
       const token = uuidv4();
       const key = `auth_${token}`;
-      await redisClient.set(key, user._id.toString(), 'EX', 24 * 60 * 60);
+      await redisClient.set(key, user._id.toString(), 24 * 60 * 60);
 
       return res.status(200).json({ token });
     } catch (err) {
