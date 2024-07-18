@@ -201,6 +201,41 @@ class FilesController {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
+  static async getFile(req, res) {
+    await dbClient.connect();
+    const fileId = req.params.id;
+    const token = req.headers['x-token'];
+    try {
+      const userId = await redisClient.get(`auth_${token}`); 
+      const file = await dbClient.db.collection('files').findOne({ _id: new ObjectId(fileId) });
+      if (!file) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      if (!file.isPublic && (!userId || file.userId.toString() !== userId)) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      if (file.type === 'folder') {
+        return res.status(400).json({ error: "A folder doesn't have content" });
+      }
+      if (!fs.existsSync(file.localPath)) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      const { size } = req.query;
+      if (size && ['500', '250', '100'].includes(size)) {
+        const thumbnailPath = `${file.localPath}_${size}`;
+        if (!fs.existsSync(thumbnailPath)) {
+          return res.status(404).json({ error: 'Not found' });
+        }
+        file.localPath = thumbnailPath;
+      }
+      const mimeType = mime.lookup(file.name) || 'application/octet-stream';
+      res.type(mimeType);
+      fs.createReadStream(file.localPath).pipe(res);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
 }
 
 module.exports = FilesController;
