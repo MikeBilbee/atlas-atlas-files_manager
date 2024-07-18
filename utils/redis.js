@@ -35,5 +35,9 @@ class RedisClient {
   }
 }
 
+RedisClient.prototype.get = promisify(RedisClient.prototype.get);
+RedisClient.prototype.set = promisify(RedisClient.prototype.set);
+RedisClient.prototype.del = promisify(RedisClient.prototype.del);
+
 const redisClient = new RedisClient();
 module.exports = redisClient;

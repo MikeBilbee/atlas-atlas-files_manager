@@ -149,6 +149,18 @@ class FilesController {
       return res.status(500).json({ error: 'Internal server error' });
     }
   }
+
+  static async nbFiles() {
+    await dbClient.connect();
+
+    try {
+      const collection = dbClient.db.collection('files');
+      await collection.countDocuments();
+    } catch (error) {
+      console.error('Error counting files', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = FilesController;
